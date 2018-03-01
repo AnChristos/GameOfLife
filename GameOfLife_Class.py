@@ -40,64 +40,75 @@ class GameOfLife:
 		pass
 
 
-	def evolve(self):
+	def evolve(self,steps):
 		"""The method that does the actual evolution.
 		Only the non-zero cells i.e alive or alive neighbours
-		Need to be checked. Update the cell plus its neighbours"""
-		#Live or dead is the 0th bit
-		#Since the neighbour info is encoded 
-		#if it is alive and does not have 2 or 3 neighbours it must die
-		idx_alive_to_die=((self.world!=0) & (self.world&0x01) &((self.world>>1)!=2) & ((self.world>>1)!=3)).nonzero()
-		#if it is dead and has 3 neighbours it becomes alive 
-		idx_dead_to_live= ((self.world!=0) & ((self.world&0x01)==0) & ((self.world>>1)==3)).nonzero()
+		Need to be checked. Update the cell plus its neighbours"""	
+		for _ in xrange(steps):
+			#Live or dead is the 0th bit
+			#Since the neighbour info is encoded 
+			#if it is alive and does not have 2 or 3 neighbours it must die
+			idx_alive_to_die=((self.world!=0) & (self.world&0x01) &((self.world>>1)!=2) & ((self.world>>1)!=3)).nonzero()
+			#if it is dead and has 3 neighbours it becomes alive 
+			idx_dead_to_live= ((self.world!=0) & ((self.world&0x01)==0) & ((self.world>>1)==3)).nonzero()
 	
 		
-		#Now in the self.world update the cell and the 8 neighbour words
-		#All the operations are fixed/encoded at this stage i.e
-		#we move all things to the next step
-		self.world[idx_dead_to_live] |= 0x01
-		self.world[idx_alive_to_die] &= (~0x01) 
-		#This is the part where a more numpy way is perhaps needed
-		#we need to add or subtract 2 for each of the 8 neighbours
+			#Now in the self.world update the cell and the 8 neighbour words
+			#All the operations are fixed/encoded at this stage i.e
+			#we move all things to the next step
+			self.world[idx_dead_to_live] |= 0x01
+			self.world[idx_alive_to_die] &= (~0x01) 
+			#This is the part where a more numpy way is perhaps needed
+			#we need to add or subtract 2 for each of the 8 neighbours
 
-		#This is still a python loop so can be further optimised
-		for i in xrange(idx_dead_to_live[0].size):
-			self.world[self.neighbours(idx_dead_to_live[0][i],idx_dead_to_live[1][i])]+=2
-		for i in xrange(idx_alive_to_die[0].size):
-			self.world[self.neighbours(idx_alive_to_die[0][i],idx_alive_to_die[1][i])]-=2		
+			#This is still a python loop so can be further optimised
+			for i in xrange(idx_dead_to_live[0].size):
+				self.world[self.neighbours(idx_dead_to_live[0][i],idx_dead_to_live[1][i])]+=2
+			for i in xrange(idx_alive_to_die[0].size):
+				self.world[self.neighbours(idx_alive_to_die[0][i],idx_alive_to_die[1][i])]-=2		
 		
-		out=self.world&0x01	
-		return out
+			out=self.world&0x01	
+			yield out
 
 
 
 if __name__ =='__main__':
-	
-	world = np.loadtxt('GliderLarge.txt')
-	mygame=GameOfLife(world)
-	
-	animation=True
-	
+
+	animation=False
 	if not animation:
-		for i in xrange (1000):
-			mygame.evolve()
+		world = np.loadtxt('GliderLarge.txt')
+		game=GameOfLife(world)
+		for i in game.evolve(1000):
+			pass
 	else:
 		#Test the animation 
 		import matplotlib
 		matplotlib.use('TKAgg')
 		import matplotlib.pyplot as plt
 		import matplotlib.animation as animation
+		# A closure seems nicer for this 
+		def animateGame(world,frames,inInterval):
+			#get the artist we will need
+   			fig=plt.figure()
+			im=plt.imshow(world,cmap=plt.cm.binary,interpolation='nearest',animated=True)
+			#create an instance of the class 
+			game=GameOfLife(world)
+			#This will genetate as many frames as requested 	
+    			def animationFrames():    
+        			for i in game.evolve(frames):
+            				yield i
 
-		fig=plt.figure()
-		im=plt.imshow(world,cmap=plt.cm.binary,interpolation='nearest',animated=True)
+            		#Here we set the 'artist', needs one input argument
+			# which is what animationFrames yields
+    			def animate(board):
+        			im.set_data(board)
+        			return (im,)
+    
+    			ani = animation.FuncAnimation(fig, animate, frames=animationFrames,interval=inInterval,blit=True)
+    			plt.show()
 
-		def animate(*args): 
-			data= mygame.evolve()
-			im.set_data(data)
-			return im,
-
-		ani = animation.FuncAnimation(fig, animate, frames=200, interval=100,blit=True)
-		plt.show()
-
+		world = np.loadtxt('GliderLarge.txt')
+		animateGame(world,200,100)
+	
 
 

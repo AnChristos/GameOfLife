@@ -3,7 +3,7 @@ import numpy as np
 # The ideas are taken from the C version at chapter 17
 # https://www.phatcode.net/res/224/files/html/ch17/17-01.html
 
-#This is a generator / "closure" to evolve N steps
+#This is a generator  to evolve N steps
 def evolve(world,steps):
 	""" Each cell encodes at bit :
 	0 : Live or dead
@@ -13,7 +13,9 @@ def evolve(world,steps):
 	rows,cols=world.shape
 	rightedge=cols-1
 	bottomedge=rows-1
-
+	#convert to the internal representation 
+	world=np.array(world,dtype=np.int8)
+	
 	def neighbours(i,j):
 		"""Returns the indices of the 8 Neighbours of cell(i,j)
 		   Wraps around the right/bottom edge of the world.
@@ -33,7 +35,7 @@ def evolve(world,steps):
 				neighIdx[1][np.array([2,4,7])]=0
 			return neighIdx	
 
-	def prepareInitialWorld(world):
+	def prepareInitialWorld():
 		"""Simple helper for the initialisation,
 		   Change the input to the conventions used"""
 		nonZero=world.nonzero()
@@ -42,7 +44,7 @@ def evolve(world,steps):
 			world[neighindices]+=2
 		pass
 
-	def evolveCells(world):
+	def evolveCells():
 		"""The method that does the actual evolution.
 		Only the non-zero cells i.e alive or alive neighbours
 		Need to be checked. Update the cell plus its neighbours"""
@@ -68,22 +70,53 @@ def evolve(world,steps):
 		for i in xrange(idx_alive_to_die[0].size):
 			world[neighbours(idx_alive_to_die[0][i],idx_alive_to_die[1][i])]-=2		
 		pass
-
-	#convert to the internal representation 
-	world=np.array(world,dtype=np.int8)
-	prepareInitialWorld(world)
-	#srep using the function set up above
+        #convert as to use the internal conventions
+	prepareInitialWorld()
+	#step using the function set up above
 	for _ in xrange(steps):
-		evolveCells(world)
+		evolveCells()
 	        #swap the "pointers"
 		out=world&0x01	
 		yield out
 
 if __name__ =='__main__':
-	world = np.loadtxt('GliderSmall.txt')
+
+ 	animation=True
+	if not animation:
+		world = np.loadtxt('GliderLarge.txt')
+		for nextWorld in evolve(world,1000):
+			pass
+	else:
+		#Test the animation 
+		import matplotlib
+		matplotlib.use('TKAgg')
+		import matplotlib.pyplot as plt
+		import matplotlib.animation as animation
+		# A closure seems nicer for this 
+		def animateGame(world,frames,inInterval):
+			#get the artist we will need
+   			fig=plt.figure()
+			im=plt.imshow(world,cmap=plt.cm.binary,interpolation='nearest',animated=True)
+			#This will genetate as many frames as requested 	
+    			def animationFrames():    
+        			for i in evolve(world,frames):
+            				yield i
+
+            		#Here we set the 'artist', needs one input argument
+			# which is what animationFrames yields
+    			def animate(board):
+        			im.set_data(board)
+        			return (im,)
+    
+    			ani = animation.FuncAnimation(fig, animate, frames=animationFrames,interval=inInterval,blit=True)
+    			plt.show()
+
+		world = np.loadtxt('GliderLarge.txt')
+		animateGame(world,200,100)
+	
+	world = np.loadtxt('GliderLarge.txt')
 	for nextworld in evolve(world,1000):
-		print nextworld
-		
+		pass
 	
 
 
