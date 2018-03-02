@@ -40,32 +40,7 @@ def evolve(world,steps):
 		np.add.at(world, (update_i,update_j),toadd)
 		pass
 
-	def neighbours(self,updateIdx,toadd):
-		"""Returns the indices of the 8 Neighbours of cell(i,j)
-		   Wraps around the right/bottom edge of the world.
-		   The left/up is covered by the numpy conventions
-		   [i-1,j-1], [i-1,j], [i-1,j+1]
-		   [i,j-1 ] ,  ----  , [i,j+1]
-		   [i+1,j-1]  [i+1,j]   [i+1,j+1]"""
-		#This for is expensive in python
-		
-		for index in xrange(updateIdx[0].size):
-			i=updateIdx[0][index]
-			j=updateIdx[1][index]
-			i1,i_1=i+1,i-1
-			j1,j_1=j+1,j-1
-			neighIdx= (np.array([i_1,i_1,i_1,i,i,i1,i1,i1]),
-					np.array([j_1,j,j1,j_1,j1,j_1,j,j1]))	
-			#Assume that life in the edges is risky anyhow :)
-			try :	
-				self.world[neighIdx]+=toadd
-			except IndexError:
-				if i==self.bottomedge :
-					neighIdx[0][5:8]=0
-				if j==self.rightedge:
-					neighIdx[1][np.array([2,4,7])]=0			
-				self.world[neighIdx]+=toadd
-	
+
 	def prepareInitialWorld():
 		"""Simple helper for the initialisation,
 		   Change the input to the conventions used"""
