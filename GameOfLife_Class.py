@@ -3,14 +3,17 @@
 
 #Here a more class oriented approach
 import numpy as np
-class GameOfLife:
+class GameOfLife(object):
 	def __init__(self,world):
-		rows,cols=world.shape
-		self.rightedge=cols-1
-		self.bottomedge=rows-1
+		_rows,_cols=world.shape
+		self.rightedge=_cols-1
+		self.bottomedge=_rows-1
+		_mesh=np.meshgrid(np.linspace(-1,1,3),np.linspace(-1,1,3),indexing='ij')
+		self.mesh_i=np.array(np.delete(_mesh[0].flatten(),4),dtype=np.int8)[np.newaxis].T
+		self.mesh_j=np.array(np.delete(_mesh[1].flatten(),4),dtype=np.int8)[np.newaxis].T
 		self.world=np.array(world,dtype=np.int8)
 		self.prepareInitialWorld()
-	
+
 	def neighbours(self,updateIdx,toadd):
 		"""Returns the indices of the 8 Neighbours of cell(i,j)
 		   Wraps around the right/bottom edge of the world.
@@ -18,24 +21,17 @@ class GameOfLife:
 		   [i-1,j-1], [i-1,j], [i-1,j+1]
 		   [i,j-1 ] ,  ----  , [i,j+1]
 		   [i+1,j-1]  [i+1,j]   [i+1,j+1]"""
-		#This for is expensive in python
-		
-		for index in xrange(updateIdx[0].size):
-			i=updateIdx[0][index]
-			j=updateIdx[1][index]
-			i1,i_1=i+1,i-1
-			j1,j_1=j+1,j-1
-			neighIdx= (np.array([i_1,i_1,i_1,i,i,i1,i1,i1]),
-					np.array([j_1,j,j1,j_1,j1,j_1,j,j1]))	
-			#Assume that life in the edges is risky anyhow :)
-			try :	
-				self.world[neighIdx]+=toadd
-			except IndexError:
-				if i==self.bottomedge :
-					neighIdx[0][5:8]=0
-				if j==self.rightedge:
-					neighIdx[1][np.array([2,4,7])]=0			
-				self.world[neighIdx]+=toadd
+		#mesh_i/j are (8 row, 1 column) , updateIdx[0/1] are (1 row, N column
+		# this creates an 8xN which we transpose to Nx8
+		# So each row of the matrices is the i / j indices to update 
+		# per cell 
+		update_i=(self.mesh_i+updateIdx[0]).T
+		update_j=(self.mesh_j+updateIdx[1]).T
+		#handle edges
+		update_i[update_i>self.bottomedge]=0
+		update_j[update_j>self.rightedge]=0
+		#add the proper world
+		np.add.at(self.world, (update_i,update_j),toadd)
 		pass
 
 	def prepareInitialWorld(self):

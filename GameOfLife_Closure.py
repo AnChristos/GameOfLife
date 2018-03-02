@@ -19,6 +19,7 @@ def evolve(world,steps):
 	mesh=np.meshgrid(np.linspace(-1,1,3),np.linspace(-1,1,3),indexing='ij')
 	mesh_i=np.array(np.delete(mesh[0].flatten(),4),dtype=np.int8)[np.newaxis].T
 	mesh_j=np.array(np.delete(mesh[1].flatten(),4),dtype=np.int8)[np.newaxis].T
+
 	def neighbours(updateIdx,toadd):
 		"""Returns the indices of the 8 Neighbours of cell(i,j)
 		   Wraps around the right/bottom edge of the world.
@@ -26,27 +27,50 @@ def evolve(world,steps):
 		   [i-1,j-1], [i-1,j], [i-1,j+1]
 		   [i,j-1 ] ,  ----  , [i,j+1]
 		   [i+1,j-1]  [i+1,j]   [i+1,j+1]"""
+		#mesh_i/j are (8 row, 1 column) , updateIdx[0/1] are (1 row, N column
+		# this creates an 8xN which we transpose to Nx8
+		# So each row of the matrices is the i / j indices to update 
+		# per cell 
 		update_i=(mesh_i+updateIdx[0]).T
 		update_j=(mesh_j+updateIdx[1]).T
-		allcomb=map(lambda x,y :( x, y ) ,update_i,update_j)
-		print allcomb
-		#This can be slow in python but possibly can be mapped
-		for neighIdx in allcomb: 
-			try :	
-				world[neighIdx]+=toadd
-			except IndexError:
-				if np.any(neighIdx[0]==bottomedge) :
-					neighIdx[0][5:8]=0
-				if np.any(neighIdx[1]==rightedge):
-					neighIdx[1][np.array([2,4,7])]=0			
-				world[neighIdx]+=toadd
+		#handle edges
+		update_i[update_i>bottomedge]=0
+		update_j[update_j>rightedge]=0
+		#add the proper world
+		np.add.at(world, (update_i,update_j),toadd)
 		pass
 
+	def neighbours(self,updateIdx,toadd):
+		"""Returns the indices of the 8 Neighbours of cell(i,j)
+		   Wraps around the right/bottom edge of the world.
+		   The left/up is covered by the numpy conventions
+		   [i-1,j-1], [i-1,j], [i-1,j+1]
+		   [i,j-1 ] ,  ----  , [i,j+1]
+		   [i+1,j-1]  [i+1,j]   [i+1,j+1]"""
+		#This for is expensive in python
+		
+		for index in xrange(updateIdx[0].size):
+			i=updateIdx[0][index]
+			j=updateIdx[1][index]
+			i1,i_1=i+1,i-1
+			j1,j_1=j+1,j-1
+			neighIdx= (np.array([i_1,i_1,i_1,i,i,i1,i1,i1]),
+					np.array([j_1,j,j1,j_1,j1,j_1,j,j1]))	
+			#Assume that life in the edges is risky anyhow :)
+			try :	
+				self.world[neighIdx]+=toadd
+			except IndexError:
+				if i==self.bottomedge :
+					neighIdx[0][5:8]=0
+				if j==self.rightedge:
+					neighIdx[1][np.array([2,4,7])]=0			
+				self.world[neighIdx]+=toadd
+	
 	def prepareInitialWorld():
 		"""Simple helper for the initialisation,
 		   Change the input to the conventions used"""
 		nonZero=world.nonzero()
-		neighbours(nonZero,int(2))
+		neighbours(nonZero,2)
 		pass
 
 	def evolveCells():
@@ -58,9 +82,7 @@ def evolve(world,steps):
 		#if it is alive and does not have 2 or 3 neighbours it must die
 		idx_alive_to_die=((world!=0) & (world&0x01) &((world>>1)!=2) & ((world>>1)!=3)).nonzero()
 		#if it is dead and has 3 neighbours it becomes alive 
-		idx_dead_to_live= ((world!=0) & ((world&0x01)==0) & ((world>>1)==3)).nonzero()
-	
-		
+		idx_dead_to_live= ((world!=0) & ((world&0x01)==0) & ((world>>1)==3)).nonzero()	
 		#Now in the world update the cell and the 8 neighbour words
 		#All the operations are fixed/encoded at this stage i.e
 		#we move all things to the next step
@@ -68,11 +90,10 @@ def evolve(world,steps):
 		world[idx_alive_to_die] &= (~0x01) 
 		#This is the part where a more numpy way is perhaps needed
 		#we need to add or subtract 2 for each of the 8 neighbours
-
-		#This is still a python loop so can be further optimised
-		neighbours(idx_dead_to_live,int(2))
-		neighbours(idx_alive_to_die,int(-2))
+		neighbours(idx_dead_to_live,2)
+		neighbours(idx_alive_to_die,-2)
 		pass
+
         #convert as to use the internal conventions
 	prepareInitialWorld()
 	#step using the function set up above
