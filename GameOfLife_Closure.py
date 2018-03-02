@@ -16,32 +16,37 @@ def evolve(world,steps):
 	#convert to the internal representation 
 	world=np.array(world,dtype=np.int8)
 	
-	def neighbours(i,j):
+	mesh=np.meshgrid(np.linspace(-1,1,3),np.linspace(-1,1,3),indexing='ij')
+	mesh_i=np.array(np.delete(mesh[0].flatten(),4),dtype=np.int8)[np.newaxis].T
+	mesh_j=np.array(np.delete(mesh[1].flatten(),4),dtype=np.int8)[np.newaxis].T
+	def neighbours(updateIdx,toadd):
 		"""Returns the indices of the 8 Neighbours of cell(i,j)
 		   Wraps around the right/bottom edge of the world.
 		   The left/up is covered by the numpy conventions
 		   [i-1,j-1], [i-1,j], [i-1,j+1]
 		   [i,j-1 ] ,  ----  , [i,j+1]
 		   [i+1,j-1]  [i+1,j]   [i+1,j+1]"""
-		#Perhaps small Opt are possible here 
-		neighIdx= (np.array([i-1,i-1,i-1,i,i,i+1,i+1,i+1]),
-				np.array([j-1,j,j+1,j-1,j+1,j-1,j,j+1]))
-		if i<bottomedge and j<rightedge:
-			return neighIdx
-		else :
-			if i==bottomedge :
-				neighIdx[0][5:8]=0
-			if j==rightedge:
-				neighIdx[1][np.array([2,4,7])]=0
-			return neighIdx	
+		update_i=(mesh_i+updateIdx[0]).T
+		update_j=(mesh_j+updateIdx[1]).T
+		allcomb=map(lambda x,y :( x, y ) ,update_i,update_j)
+		print allcomb
+		#This can be slow in python but possibly can be mapped
+		for neighIdx in allcomb: 
+			try :	
+				world[neighIdx]+=toadd
+			except IndexError:
+				if np.any(neighIdx[0]==bottomedge) :
+					neighIdx[0][5:8]=0
+				if np.any(neighIdx[1]==rightedge):
+					neighIdx[1][np.array([2,4,7])]=0			
+				world[neighIdx]+=toadd
+		pass
 
 	def prepareInitialWorld():
 		"""Simple helper for the initialisation,
 		   Change the input to the conventions used"""
 		nonZero=world.nonzero()
-		for i in xrange(nonZero[0].size):
-			neighindices=neighbours(nonZero[0][i],nonZero[1][i])
-			world[neighindices]+=2
+		neighbours(nonZero,int(2))
 		pass
 
 	def evolveCells():
@@ -65,10 +70,8 @@ def evolve(world,steps):
 		#we need to add or subtract 2 for each of the 8 neighbours
 
 		#This is still a python loop so can be further optimised
-		for i in xrange(idx_dead_to_live[0].size):
-			world[neighbours(idx_dead_to_live[0][i],idx_dead_to_live[1][i])]+=2
-		for i in xrange(idx_alive_to_die[0].size):
-			world[neighbours(idx_alive_to_die[0][i],idx_alive_to_die[1][i])]-=2		
+		neighbours(idx_dead_to_live,int(2))
+		neighbours(idx_alive_to_die,int(-2))
 		pass
         #convert as to use the internal conventions
 	prepareInitialWorld()
@@ -81,10 +84,10 @@ def evolve(world,steps):
 
 if __name__ =='__main__':
 
- 	animation=True
+ 	animation=False
 	if not animation:
-		world = np.loadtxt('GliderLarge.txt')
-		for nextWorld in evolve(world,1000):
+		world = np.loadtxt('GliderGun.txt')
+		for nextWorld in evolve(world,10000):
 			pass
 	else:
 		#Test the animation 
@@ -93,14 +96,14 @@ if __name__ =='__main__':
 		import matplotlib.pyplot as plt
 		import matplotlib.animation as animation
 		# A closure seems nicer for this 
-		def animateGame(world,frames,inInterval):
+		def animateGame(world,inFrames,inInterval):
 			#get the artist we will need
    			fig=plt.figure()
 			im=plt.imshow(world,cmap=plt.cm.binary,interpolation='nearest',animated=True)
 			#This will genetate as many frames as requested 	
     			def animationFrames():    
-        			for i in evolve(world,frames):
-            				yield i
+				for i in evolve(world,inFrames):
+					yield i
 
             		#Here we set the 'artist', needs one input argument
 			# which is what animationFrames yields
@@ -111,8 +114,8 @@ if __name__ =='__main__':
     			ani = animation.FuncAnimation(fig, animate, frames=animationFrames,interval=inInterval,blit=True)
     			plt.show()
 
-		world = np.loadtxt('Glider.txt')
-		animateGame(world,200,100)
+		world = np.loadtxt('GliderGun.txt')
+		animateGame(world,200,50)
 	
 	
 
