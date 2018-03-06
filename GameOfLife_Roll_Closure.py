@@ -52,7 +52,7 @@ if __name__ =='__main__':
         			return (im,)
   
     			ani = animation.FuncAnimation(fig, animate, frames=animationFrames,interval=inInterval,blit=True)
-    			plt.show()
+			plt.show()
 
 		world = np.loadtxt('GliderGun.txt')
 		animateGame(world,200,50)

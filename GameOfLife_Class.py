@@ -70,7 +70,7 @@ class GameOfLife(object):
 
 if __name__ =='__main__':
 
-	animation=True
+	animation=False
 	if not animation:
 		world = np.loadtxt('GliderGun.txt')
 		game=GameOfLife(world)
