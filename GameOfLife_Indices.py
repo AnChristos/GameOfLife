@@ -1,5 +1,5 @@
 import numpy as np
-
+from hashlib import md5
 # The ideas are taken from the C version at chapter 17
 # https://www.phatcode.net/res/224/files/html/ch17/17-01.html
 
@@ -20,7 +20,8 @@ def evolve(world,steps):
 	mesh_i=np.array(np.delete(mesh[0].flatten(),4),dtype=np.int8)[np.newaxis].T
 	mesh_j=np.array(np.delete(mesh[1].flatten(),4),dtype=np.int8)[np.newaxis].T
 
-	def neighbours(updateIdx,toadd):
+
+	def neighbours(world,updateIdx,toadd):
 		"""Returns the indices of the 8 Neighbours of cell(i,j)
 		   Wraps around the right/bottom edge of the world.
 		   The left/up is covered by the numpy conventions
@@ -28,36 +29,27 @@ def evolve(world,steps):
 		   [i,j-1 ] ,  ----  , [i,j+1]
 		   [i+1,j-1]  [i+1,j]   [i+1,j+1]"""
 		#mesh_i/j are (8 row, 1 column) , updateIdx[0/1] are (1 row, N column
-		# this creates an 8xN which we transpose to Nx8
-		# So each row of the matrices is the i / j indices to update 
-		# per cell 
-		update_i=(mesh_i+updateIdx[0]).T
-		update_j=(mesh_j+updateIdx[1]).T
+		# this creates an 8xN which we ravel so we have the i,j inices
+		update_i=np.ravel(mesh_i+updateIdx[0])
+		update_j=np.ravel(mesh_j+updateIdx[1])
 		#handle edges
 		update_i[update_i>bottomedge]=0
 		update_j[update_j>rightedge]=0
 		#add the proper world
 		np.add.at(world, (update_i,update_j),toadd)
-		pass
+		return world
 
-
-	def prepareInitialWorld():
-		"""Simple helper for the initialisation,
-		   Change the input to the conventions used"""
-		nonZero=world.nonzero()
-		neighbours(nonZero,2)
-		pass
-
-	def evolveCells():
+       
+	def evolveCells(world):
 		"""The method that does the actual evolution.
 		Only the non-zero cells i.e alive or alive neighbours
 		Need to be checked. Update the cell plus its neighbours"""
 		#Live or dead is the 0th bit
 		#Since the neighbour info is encoded 
 		#if it is alive and does not have 2 or 3 neighbours it must die
-		idx_alive_to_die=((world!=0) & (world&0x01) &((world>>1)!=2) & ((world>>1)!=3)).nonzero()
+		idx_alive_to_die=np.nonzero((world!=0) & (world&0x01) &((world>>1)!=2) & ((world>>1)!=3))
 		#if it is dead and has 3 neighbours it becomes alive 
-		idx_dead_to_live= ((world!=0) & ((world&0x01)==0) & ((world>>1)==3)).nonzero()	
+		idx_dead_to_live= np.nonzero((world!=0) & ((world&0x01)==0) & ((world>>1)==3))	
 		#Now in the world update the cell and the 8 neighbour words
 		#All the operations are fixed/encoded at this stage i.e
 		#we move all things to the next step
@@ -65,15 +57,18 @@ def evolve(world,steps):
 		world[idx_alive_to_die] &= (~0x01) 
 		#This is the part where a more numpy way is perhaps needed
 		#we need to add or subtract 2 for each of the 8 neighbours
-		neighbours(idx_dead_to_live,2)
-		neighbours(idx_alive_to_die,-2)
-		pass
-
-        #convert as to use the internal conventions
-	prepareInitialWorld()
+		world=neighbours(world,idx_dead_to_live,2)
+		world=neighbours(world,idx_alive_to_die,-2)
+		return world
+	
+	#convert as to use the internal conventions
+	nonZero=world.nonzero()
+	world=neighbours(world,nonZero,2)
+	
 	#step using the function set up above
-	for _ in xrange(steps):
-		evolveCells()
+	for _ in xrange(steps):	        
+		nextworld=evolveCells(world)
+		world=nextworld
 	        #swap the "pointers"
 		out=world&0x01	
 		yield out
@@ -99,8 +94,9 @@ if __name__ =='__main__':
 			#This will genetate as many frames as requested 	
     			def animationFrames():    
 				for i in evolve(world,inFrames):
+					alive_tuple=(i&0x01).nonzero()
 					yield i
-
+					
             		#Here we set the 'artist', needs one input argument
 			# which is what animationFrames yields
     			def animate(board):
@@ -111,7 +107,7 @@ if __name__ =='__main__':
     			plt.show()
 
 		world = np.loadtxt('GliderGun.txt')
-		animateGame(world,200,50)
+		animateGame(world,100,50)
 	
 	
 

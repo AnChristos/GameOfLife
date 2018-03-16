@@ -12,9 +12,9 @@ def evolve(world):
         # count the number of neighbours 
         neigh = convolve2d(world, np.ones((3, 3)), mode='same', boundary='wrap') - world
         # game of life rules
-        world = np.logical_or(np.logical_and(world, neigh ==2), neigh==3)
-        world = world.astype(int)
-        return  world
+        localworld = np.logical_or(np.logical_and(world, neigh ==2), neigh==3)
+        localworld = localworld.astype(int)
+        return  localworld
 
 if __name__ =='__main__':
 
@@ -30,23 +30,20 @@ if __name__ =='__main__':
 		import matplotlib.pyplot as plt
 		import matplotlib.animation as animation
 		# A closure seems nicer for this 
-		def animateGame(inworld,inFrames,inInterval):
+		def animateGame(world,inFrames,inInterval):
 			#get the artist we will need
    			fig=plt.figure()
-			im=plt.imshow(world,cmap=plt.cm.binary,interpolation='nearest',animated=True)
-			#This will genetate as many frames as requested 	
-
-            		#Here we set the 'artist', needs one input argument
-			# which is what animationFrames yields
-    			def animate(i):
-				global world
-				world=evolve(world)
-        			im.set_data(world)
-        			return (im,)
-  
-    			ani = animation.FuncAnimation(fig, animate, frames=inFrames,interval=inInterval,blit=True)
+   			ims=[] 
+    			for i in range(inFrames):
+        			print(i)
+        			world=evolve(world)
+				im=plt.imshow(world,cmap=plt.cm.binary,interpolation='nearest',animated=True)
+        			ims.append([im])
+        
+    			ani=animation.ArtistAnimation(fig, ims,interval=inInterval,blit=True)
     			plt.show()
-
+    			pass
+		
 		world = np.loadtxt('GliderGun.txt')
 		animateGame(world,200,50)
 	

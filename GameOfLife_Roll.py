@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 #Solution using a more functional approach , with a generator
 #function at its core
 # inspiration from http://jakevdp.github.io/blog/2013/08/07/conways-game-of-life/
@@ -24,7 +26,7 @@ def evolve(world,steps):
 
 if __name__ =='__main__':
 
- 	animation=True
+ 	animation=False
 	if not animation:
 		world = np.loadtxt('GliderGun.txt')
 		for nextWorld in evolve(world,10000):

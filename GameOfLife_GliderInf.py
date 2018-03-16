@@ -130,7 +130,7 @@ if __name__ =='__main__':
     			ani = animation.FuncAnimation(fig, animate, frames=animationFrames,interval=inInterval,blit=True)
     			plt.show()
 
-		world = np.loadtxt('Glider.txt')
+		world = np.loadtxt('Loaf.txt')
 		animateGame(world,200,50)
 	
 	
