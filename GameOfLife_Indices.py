@@ -43,8 +43,8 @@ def evolve(world,steps,ruleFun=GameOfLife,Infinite=False):
 		   [i+1,j-1]  [i+1,j]   [i+1,j+1]"""
 		#mesh_i/j are (8 row, 1 column) , updateIdx[0/1] are (1 row, N column
 		# this creates an 8xN which we ravel so we have the i,j inices
-		update_i=np.ravel(mesh_i+updateIdx[0])
-		update_j=np.ravel(mesh_j+updateIdx[1])
+		update_i=mesh_i+updateIdx[0]
+		update_j=mesh_j+updateIdx[1]
 		#handle edges
 		update_i[update_i>bottomedge]=0
 		update_j[update_j>rightedge]=0
