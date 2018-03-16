@@ -8,17 +8,15 @@ import numpy as np
 
 #This is a generator / closure to evolve N steps
 def evolve(world,steps):
-    def roll_it(x, y):
-	#[i-1,j-1], [i-1,j], [i-1,j+1]
-	# [i,j-1 ] ,  ----  , [i,j+1]
-	# [i+1,j-1]  [i+1,j]   [i+1,j+1]	
-        return np.roll(np.roll(world, y, axis=0), x, axis=1)
 
     for _ in xrange(steps):
         # count the number of neighbours 
-        neigh = roll_it(1, 0) + roll_it(0, 1) + roll_it(-1, 0) \
-            + roll_it(0, -1) + roll_it(1, 1) + roll_it(-1, -1) \
-            + roll_it(1, -1) + roll_it(-1, 1)
+	#[i-1,j-1], [i-1,j], [i-1,j+1]
+	# [i,j-1 ] ,  ----  , [i,j+1]
+	# [i+1,j-1]  [i+1,j]   [i+1,j+1]		
+        neigh = np.roll(world,(-1,-1),(0,1))+ np.roll(world,-1,0)+np.roll(world,(-1,1),(0,1))+\
+		np.roll(world,-1,1)+np.roll(world,1,1)+\
+		np.roll(world,(1,-1),(0,1))+ np.roll(world,1,0)+np.roll(world,(1,1),(0,1))
         # game of life rules
         world = np.logical_or(np.logical_and(world, neigh ==2), neigh==3)
         world = world.astype(int)
@@ -26,7 +24,7 @@ def evolve(world,steps):
 
 if __name__ =='__main__':
 
- 	animation=False
+ 	animation=True
 	if not animation:
 		world = np.loadtxt('GliderGun.txt')
 		for nextWorld in evolve(world,10000):

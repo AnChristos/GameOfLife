@@ -37,7 +37,6 @@ if __name__ =='__main__':
    			fig=plt.figure()
    			ims=[] 
     			for i in range(inFrames):
-        			print(i)
         			world=evolve(world)
 				im=plt.imshow(world,cmap=plt.cm.binary,interpolation='nearest',animated=True)
         			ims.append([im])
