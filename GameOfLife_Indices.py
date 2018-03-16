@@ -1,10 +1,27 @@
+#!/usr/bin/env python
 import numpy as np
-from hashlib import md5
 # The ideas are taken from the C version at chapter 17
 # https://www.phatcode.net/res/224/files/html/ch17/17-01.html
 
+#Simple function to encode the rules,this depends on how the evolve expects them
+def GameOfLife(world):
+	#Live or dead is the 0th bit
+   	 #Since the neighbour info is encoded 
+    	#if it is alive and does not have 2 or 3 neighbours it must die
+    	idx_alive_to_die=np.nonzero((world!=0) & (world&0x01) &((world>>1)!=2) & ((world>>1)!=3))
+    	#if it is dead and has 3 neighbours it becomes alive 
+    	idx_dead_to_live= np.nonzero((world!=0) & ((world&0x01)==0) & ((world>>1)==3))	
+    	return idx_alive_to_die,idx_dead_to_live
+
+def HighLife(world):
+	#if it is alive and does not have 2 or 3 neighbours it must die
+    	idx_alive_to_die=np.nonzero((world!=0) & (world&0x01) &((world>>1)!=2) & ((world>>1)!=3))
+    	#if it is dead and has 3 or 6 neighbours it becomes alive 
+    	idx_dead_to_live= np.nonzero((world!=0) & ((world&0x01)==0) & ( ((world>>1)==3) | ((world>>1)==6) ) )
+    	return idx_alive_to_die,idx_dead_to_live
+
 #This is a generator  to evolve N steps
-def evolve(world,steps):
+def evolve(world,steps,ruleFun=GameOfLife,Infinite=False):
 	""" Each cell encodes at bit :
 	0 : Live or dead
 	1-4 : +=2 for each alive neighbour (so values can be 0-16)
@@ -13,13 +30,9 @@ def evolve(world,steps):
 	rows,cols=world.shape
 	rightedge=cols-1
 	bottomedge=rows-1
-	#convert to the internal representation 
-	world=np.array(world,dtype=np.int8)
-	
 	mesh=np.meshgrid(np.linspace(-1,1,3),np.linspace(-1,1,3),indexing='ij')
 	mesh_i=np.array(np.delete(mesh[0].flatten(),4),dtype=np.int8)[np.newaxis].T
 	mesh_j=np.array(np.delete(mesh[1].flatten(),4),dtype=np.int8)[np.newaxis].T
-
 
 	def neighbours(world,updateIdx,toadd):
 		"""Returns the indices of the 8 Neighbours of cell(i,j)
@@ -39,43 +52,58 @@ def evolve(world,steps):
 		np.add.at(world, (update_i,update_j),toadd)
 		return world
 
-       
+
 	def evolveCells(world):
 		"""The method that does the actual evolution.
 		Only the non-zero cells i.e alive or alive neighbours
 		Need to be checked. Update the cell plus its neighbours"""
 		#Live or dead is the 0th bit
 		#Since the neighbour info is encoded 
-		#if it is alive and does not have 2 or 3 neighbours it must die
-		idx_alive_to_die=np.nonzero((world!=0) & (world&0x01) &((world>>1)!=2) & ((world>>1)!=3))
-		#if it is dead and has 3 neighbours it becomes alive 
-		idx_dead_to_live= np.nonzero((world!=0) & ((world&0x01)==0) & ((world>>1)==3))	
-		#Now in the world update the cell and the 8 neighbour words
+		idx_alive_to_die,idx_dead_to_live=ruleFun(world)
+		#Now in the world update the cells to change and the 8 neighbour words
 		#All the operations are fixed/encoded at this stage i.e
 		#we move all things to the next step
 		world[idx_dead_to_live] |= 0x01
 		world[idx_alive_to_die] &= (~0x01) 
-		#This is the part where a more numpy way is perhaps needed
 		#we need to add or subtract 2 for each of the 8 neighbours
 		world=neighbours(world,idx_dead_to_live,2)
 		world=neighbours(world,idx_alive_to_die,-2)
 		return world
+
+	def recenter_inf():
+        	#The simplest is to keep the cells at the middle of the board
+        	#At least for shapes than do not grow too fast keeping the "centre
+        	# of mass" of the live cells should be good enough
+        	#Find the max and minimum of the live cells
+        	alive_tuple=(world&0x01).nonzero()
+        	min_i=np.amin(alive_tuple[0])
+        	max_i=np.amax(alive_tuple[0])
+        	min_j=np.amin(alive_tuple[1])
+        	max_j=np.amax(alive_tuple[1])
+        	#Roll so as to keep it at the ~center
+        	offset_i = center_i - min_i- (int(max_i-min_i)>>1)
+        	offset_j = center_j - min_j -(int(max_j-min_j)>>1)
+        	tmp=np.roll(world,offset_i,axis=0)
+        	nextworld=np.roll(tmp,offset_j,axis=1)
+        	return nextworld
 	
 	#convert as to use the internal conventions
+	world=np.array(world,dtype=np.int8)
 	nonZero=world.nonzero()
 	world=neighbours(world,nonZero,2)
-	
+
 	#step using the function set up above
 	for _ in xrange(steps):	        
 		nextworld=evolveCells(world)
 		world=nextworld
-	        #swap the "pointers"
+		if Infinite:
+            		world=recenter_inf()
 		out=world&0x01	
 		yield out
 
 if __name__ =='__main__':
 
- 	animation=False
+	animation=True
 	if not animation:
 		world = np.loadtxt('GliderGun.txt')
 		for nextWorld in evolve(world,10000):
@@ -89,26 +117,26 @@ if __name__ =='__main__':
 		# A closure seems nicer for this 
 		def animateGame(world,inFrames,inInterval):
 			#get the artist we will need
-   			fig=plt.figure()
+			fig=plt.figure()
 			im=plt.imshow(world,cmap=plt.cm.binary,interpolation='nearest',animated=True)
 			#This will genetate as many frames as requested 	
-    			def animationFrames():    
+			def animationFrames():    
 				for i in evolve(world,inFrames):
 					alive_tuple=(i&0x01).nonzero()
 					yield i
-					
-            		#Here we set the 'artist', needs one input argument
+
+			#Here we set the 'artist', needs one input argument
 			# which is what animationFrames yields
-    			def animate(board):
-        			im.set_data(board)
-        			return (im,)
-    
-    			ani = animation.FuncAnimation(fig, animate, frames=animationFrames,interval=inInterval,blit=True)
-    			plt.show()
+			def animate(board):
+				im.set_data(board)
+				return (im,)
+
+			ani = animation.FuncAnimation(fig, animate, frames=animationFrames,interval=inInterval,blit=True)
+			plt.show()
 
 		world = np.loadtxt('GliderGun.txt')
 		animateGame(world,100,50)
-	
-	
+
+
 
 

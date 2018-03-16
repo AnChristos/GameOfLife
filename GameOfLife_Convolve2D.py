@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 #Solution using a more functional approach , with a generator
 #function at its core
 # inspiration from http://jakevdp.github.io/blog/2013/08/07/conways-game-of-life/
