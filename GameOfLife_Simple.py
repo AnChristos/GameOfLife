@@ -23,44 +23,42 @@ def evolve(world,steps,Born=(3,),Survive=(2,3),Infinite=False):
 		for i in xrange(rows):
 			for j in xrange (cols):
 				alive=world[i,j]
-				try:
+				if i==bottomedge and j==rightedge:
 					neighsum=world[i-1,j-1]+\
-				        	world[i-1,j]+\
-					 	world[i-1,j+1]+\
-					 	world[i,j-1]+\
-					 	world[i,j+1]+\
-					 	world[i+1,j-1]+\
-					 	world[i+1,j]+\
-					 	world[i+1,j+1]
-						
-				except IndexError:
-					if i==bottomedge and j==rightedge:
-						neighsum=world[i-1,j-1]+\
-				        		world[i-1,j]+\
-					 		world[i-1,0]+\
-					 		world[i,j-1]+\
-					 		world[i,0]+\
-					 		world[0,j-1]+\
-					 		world[0,j]+\
-					 		world[0,0]
-					elif i==bottomedge:
-						neighsum=world[i-1,j-1]+\
-				        		world[i-1,j]+\
-					 		world[i-1,j+1]+\
-					 		world[i,j-1]+\
-					 		world[i,j+1]+\
-					 		world[0,j-1]+\
-					 		world[0,j]+\
-					 		world[0,j+1]
-					elif j==rightedge:
-						neighsum=world[i-1,j-1]+\
-				        		world[i-1,j]+\
-					 		world[i-1,0]+\
-					 		world[i,j-1]+\
-					 		world[i,0]+\
-					 		world[i+1,j-1]+\
-					 		world[i+1,j]+\
-					 		world[i+1,0]
+							world[i-1,j]+\
+							world[i-1,0]+\
+							world[i,j-1]+\
+							world[i,0]+\
+							world[0,j-1]+\
+							world[0,j]+\
+							world[0,0]
+				elif i==bottomedge:
+					neighsum=world[i-1,j-1]+\
+							world[i-1,j]+\
+							world[i-1,j+1]+\
+							world[i,j-1]+\
+							world[i,j+1]+\
+							world[0,j-1]+\
+							world[0,j]+\
+							world[0,j+1]
+				elif j==rightedge:
+					neighsum=world[i-1,j-1]+\
+							world[i-1,j]+\
+							world[i-1,0]+\
+							world[i,j-1]+\
+							world[i,0]+\
+							world[i+1,j-1]+\
+							world[i+1,j]+\
+							world[i+1,0]
+				else:
+					neighsum=world[i-1,j-1]+\
+							world[i-1,j]+\
+							world[i-1,j+1]+\
+							world[i,j-1]+\
+							world[i,j+1]+\
+							world[i+1,j-1]+\
+							world[i+1,j]+\
+							world[i+1,j+1]
 
 				if alive==0 and neighsum in Born:
 					step[i,j]=1
@@ -77,8 +75,8 @@ def evolve(world,steps,Born=(3,),Survive=(2,3),Infinite=False):
 		#Find the max and minimum of the live cells
 		alive_tuple=(world&0x01).nonzero()
 		if alive_tuple[0].size==0:
-            		return world,world.shape
-		
+			return world,world.shape
+
 		min_i=np.amin(alive_tuple[0])
 		max_i=np.amax(alive_tuple[0])
 		min_j=np.amin(alive_tuple[1])
@@ -95,7 +93,7 @@ def evolve(world,steps,Born=(3,),Survive=(2,3),Infinite=False):
 		if(max_j==rightedge or  max_j==0) :
 			addcols=int(0.1*cols)
 			newcols=cols+2*addcols
-		
+
 		newshape=(newrows,newcols)
 		#offset to keep the live barycenter at the center
 		offset_i = center_i - min_i- (int(max_i-min_i)>>1)
@@ -142,7 +140,7 @@ if __name__ =='__main__':
 			#This will genetate as many frames as requested 	
 			def animationFrames():
 				yield world
-				for i in evolve(world,inFrames):
+				for i in evolve(world,inFrames,Infinite=True):
 					yield i
 
 			#Here we set the 'artist', needs one input argument
@@ -154,7 +152,7 @@ if __name__ =='__main__':
 			ani = animation.FuncAnimation(fig, animate, frames=animationFrames,interval=inInterval,blit=True)
 			plt.show()
 
-		world = np.loadtxt('Pulsar.txt')
+		world = np.loadtxt('GliderGun.txt')
 		animateGame(world,1000,50)
 
 
