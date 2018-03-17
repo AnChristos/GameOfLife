@@ -19,7 +19,7 @@ def evolve(world,steps,Born=(3,),Survive=(2,3),Infinite=False):
 		#[i-1,j-1], [i-1,j], [i-1,j+1]
 		#   [i,j-1 ] ,  ----  , [i,j+1]
 		#   [i+1,j-1]  [i+1,j]   [i+1,j+1]
-		step=world.copy()	
+		step=world.copy()
 		for i in xrange(rows):
 			for j in xrange (cols):
 				alive=world[i,j]
@@ -34,7 +34,7 @@ def evolve(world,steps,Born=(3,),Survive=(2,3),Infinite=False):
 					 	world[i+1,j+1]
 						
 				except IndexError:
-					if i>bottomedge and j>righedge:
+					if i==bottomedge and j==rightedge:
 						neighsum=world[i-1,j-1]+\
 				        		world[i-1,j]+\
 					 		world[i-1,0]+\
@@ -43,7 +43,7 @@ def evolve(world,steps,Born=(3,),Survive=(2,3),Infinite=False):
 					 		world[0,j-1]+\
 					 		world[0,j]+\
 					 		world[0,0]
-					elif i>bottomedge:
+					elif i==bottomedge:
 						neighsum=world[i-1,j-1]+\
 				        		world[i-1,j]+\
 					 		world[i-1,j+1]+\
@@ -52,7 +52,7 @@ def evolve(world,steps,Born=(3,),Survive=(2,3),Infinite=False):
 					 		world[0,j-1]+\
 					 		world[0,j]+\
 					 		world[0,j+1]
-					elif j>rightedge:
+					elif j==rightedge:
 						neighsum=world[i-1,j-1]+\
 				        		world[i-1,j]+\
 					 		world[i-1,0]+\
@@ -61,8 +61,6 @@ def evolve(world,steps,Born=(3,),Survive=(2,3),Infinite=False):
 					 		world[i+1,j-1]+\
 					 		world[i+1,j]+\
 					 		world[i+1,0]
-
-
 
 				if alive==0 and neighsum in Born:
 					step[i,j]=1
@@ -156,7 +154,7 @@ if __name__ =='__main__':
 			ani = animation.FuncAnimation(fig, animate, frames=animationFrames,interval=inInterval,blit=True)
 			plt.show()
 
-		world = np.loadtxt('GliderGun.txt')
+		world = np.loadtxt('Pulsar.txt')
 		animateGame(world,1000,50)
 
 
