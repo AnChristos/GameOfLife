@@ -8,9 +8,9 @@ def GameOfLife(world):
 	#Live or dead is the 0th bit
    	 #Since the neighbour info is encoded 
     	#if it is alive and does not have 2 or 3 neighbours it must die
-    	idx_alive_to_die=np.nonzero((world!=0) & (world&0x01) &((world>>1)!=2) & ((world>>1)!=3))
+    	idx_alive_to_die=np.nonzero( (world&0x01) &((world>>1)!=2) & ((world>>1)!=3))
     	#if it is dead and has 3 neighbours it becomes alive 
-    	idx_dead_to_live= np.nonzero((world!=0) & ((world&0x01)==0) & ((world>>1)==3))	
+    	idx_dead_to_live= np.nonzero(((world&0x01)==0) & ((world>>1)==3))	
     	return idx_alive_to_die,idx_dead_to_live
 
 def HighLife(world):
@@ -27,13 +27,15 @@ def evolve(world,steps,ruleFun=GameOfLife,Infinite=False):
 	1-4 : +=2 for each alive neighbour (so values can be 0-16)
 	5-7 :not used  """
 	#Get an idea of the world shape
-	rows,cols=world.shape
-	rightedge=cols-1
+	rows, cols=world.shape
 	bottomedge=rows-1
+	rightedge=cols-1
+	center_i=rows>>1
+    	center_j=cols>>1
+	
 	mesh=np.meshgrid(np.linspace(-1,1,3),np.linspace(-1,1,3),indexing='ij')
 	mesh_i=np.array(np.delete(mesh[0].flatten(),4),dtype=np.int8)[np.newaxis].T
 	mesh_j=np.array(np.delete(mesh[1].flatten(),4),dtype=np.int8)[np.newaxis].T
-
 	def neighbours(world,updateIdx,toadd):
 		"""Returns the indices of the 8 Neighbours of cell(i,j)
 		   Wraps around the right/bottom edge of the world.
@@ -70,7 +72,7 @@ def evolve(world,steps,ruleFun=GameOfLife,Infinite=False):
 		world=neighbours(world,idx_alive_to_die,-2)
 		return world
 
-	def recenter_inf():
+	def handle_inf():
         	#The simplest is to keep the cells at the middle of the board
         	#At least for shapes than do not grow too fast keeping the "centre
         	# of mass" of the live cells should be good enough
@@ -80,13 +82,24 @@ def evolve(world,steps,ruleFun=GameOfLife,Infinite=False):
         	max_i=np.amax(alive_tuple[0])
         	min_j=np.amin(alive_tuple[1])
         	max_j=np.amax(alive_tuple[1])
-        	#Roll so as to keep it at the ~center
+	        #Do we need to resize i.e are we going out of the edges? 	
+		newrows=rows
+		newcols=cols
+		if (max_i==bottomedge):
+			newrows=int(1.25*rows)
+		if(max_j==rightedge) :
+			newcols=int(1.25*cols)
+
+		newshape=(newrows,newcols)
+		#Create the new world
+		nextworld=np.zeros(newshape,dtype=np.int8)
+		#shift to keep the barycenter at the center
         	offset_i = center_i - min_i- (int(max_i-min_i)>>1)
         	offset_j = center_j - min_j -(int(max_j-min_j)>>1)
-        	tmp=np.roll(world,offset_i,axis=0)
-        	nextworld=np.roll(tmp,offset_j,axis=1)
-        	return nextworld
-	
+		nextworld[0:rows,0:cols]=np.roll(world,(offset_i,offset_j),axis=(0,1))
+		
+		return nextworld,newshape
+
 	#convert as to use the internal conventions
 	world=np.array(world,dtype=np.int8)
 	nonZero=world.nonzero()
@@ -97,7 +110,12 @@ def evolve(world,steps,ruleFun=GameOfLife,Infinite=False):
 		nextworld=evolveCells(world)
 		world=nextworld
 		if Infinite:
-            		world=recenter_inf()
+            		world,shape=handle_inf()
+			rows,cols=world.shape
+			bottomedge=rows-1
+			rightedge=cols-1
+			center_i=rows>>1
+    			center_j=cols>>1	
 		out=world&0x01	
 		yield out
 
@@ -117,12 +135,14 @@ if __name__ =='__main__':
 		# A closure seems nicer for this 
 		def animateGame(world,inFrames,inInterval):
 			#get the artist we will need
-			fig=plt.figure()
+			fig,ax=plt.subplots()
 			im=plt.imshow(world,cmap=plt.cm.binary,interpolation='nearest',animated=True)
+    			ax.set_yticklabels([])
+    			ax.set_xticklabels([])
 			#This will genetate as many frames as requested 	
-			def animationFrames():    
-				for i in evolve(world,inFrames):
-					alive_tuple=(i&0x01).nonzero()
+			def animationFrames():
+				yield world
+				for i in evolve(world,inFrames,GameOfLife,True):
 					yield i
 
 			#Here we set the 'artist', needs one input argument
@@ -135,7 +155,7 @@ if __name__ =='__main__':
 			plt.show()
 
 		world = np.loadtxt('GliderGun.txt')
-		animateGame(world,100,50)
+		animateGame(world,1000,50)
 
 
 
