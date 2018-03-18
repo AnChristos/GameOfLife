@@ -7,6 +7,7 @@ import numpy as np
 
 
 #This is a generator / closure to evolve N steps
+@profile
 def evolve(world,steps):
 
     for _ in xrange(steps):
@@ -24,7 +25,7 @@ def evolve(world,steps):
 
 if __name__ =='__main__':
 
- 	animation=True
+ 	animation=False
 	if not animation:
 		world = np.loadtxt('GliderGun.txt')
 		for nextWorld in evolve(world,10000):

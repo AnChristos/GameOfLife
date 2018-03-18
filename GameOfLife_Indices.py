@@ -9,9 +9,9 @@ def GameOfLife(world):
 	#Live or dead is the 0th bit
 	 #Since the neighbour info is encoded 
 	#if it is alive and does not have 2 or 3 neighbours it must die
-	idx_alive_to_die=np.nonzero( (world&0x01) &((world>>1)!=2) & ((world>>1)!=3))
+	idx_alive_to_die= np.logical_and ( (world&0x01) , np.logical_and( (world>>1)!=2 , (world>>1)!=3)).nonzero()
 	#if it is dead and has 3 neighbours it becomes alive 
-	idx_dead_to_live= np.nonzero(((world&0x01)==0) & ((world>>1)==3))	
+	idx_dead_to_live= np.logical_and( (world&0x01)==0 , ((world>>1)==3)).nonzero()	
 	return idx_alive_to_die,idx_dead_to_live
 
 def HighLife(world):
@@ -36,9 +36,9 @@ def evolve(world,steps,ruleFun=GameOfLife,Infinite=False):
 	center_j=cols>>1
 
 	mesh=np.meshgrid(np.linspace(-1,1,3),np.linspace(-1,1,3),indexing='ij')
-	mesh_i=np.array(np.delete(mesh[0].flatten(),4),dtype=np.int8)[np.newaxis].T
-	mesh_j=np.array(np.delete(mesh[1].flatten(),4),dtype=np.int8)[np.newaxis].T
-	
+	mesh_i=np.array(np.delete(mesh[0].ravel(),4),dtype=np.int8)[np.newaxis].T
+	mesh_j=np.array(np.delete(mesh[1].ravel(),4),dtype=np.int8)[np.newaxis].T
+		
 	def neighbours(world,updateIdx,toadd):
 		"""Returns the indices of the 8 Neighbours of cell(i,j)
 		   Wraps around the right/bottom edge of the world.
@@ -57,7 +57,6 @@ def evolve(world,steps,ruleFun=GameOfLife,Infinite=False):
 		np.add.at(world, (update_i,update_j),toadd)
 		return world
 
-	
 	def evolveCells(world):
 		"""The method that does the actual evolution.
 		Only the non-zero cells i.e alive or alive neighbours
@@ -67,12 +66,14 @@ def evolve(world,steps,ruleFun=GameOfLife,Infinite=False):
 		idx_alive_to_die,idx_dead_to_live=ruleFun(world)
 		#Now in the world update the cells to change and the 8 neighbour words
 		#All the operations are fixed/encoded at this stage i.e
-		#we move all things to the next step	
-		world[idx_dead_to_live] |= 0x01
-		world[idx_alive_to_die] &= (~0x01) 
-		#we need to add or subtract 2 for each of the 8 neighbours
-		world=neighbours(world,idx_dead_to_live,2)
-		world=neighbours(world,idx_alive_to_die,-2)
+		#we move all things to the next step
+		#we need to add or subtract 2 for each of the 8 neighbours	
+		if idx_dead_to_live[0].size !=0 :
+            		world[idx_dead_to_live] |= 0x01
+            		world=neighbours(world,idx_dead_to_live,2)
+        	if idx_alive_to_die[0].size!=0 :
+            		world[idx_alive_to_die] &= (~0x01) 
+            		world=neighbours(world,idx_alive_to_die,-2)
 		return world
 
 	def handle_inf():
@@ -138,7 +139,7 @@ if __name__ =='__main__':
 	animation=True
 	if not animation:
 		world = np.loadtxt('GliderGun.txt')
-		for nextWorld in evolve(world,1000):
+		for nextWorld in evolve(world,10000):
 			pass
 	else:
 		#Test the animation 
