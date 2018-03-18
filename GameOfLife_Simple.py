@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import numpy as np
-
+import itertools
 #Naive / text book Game of Life Implementation
 
 #This is a generator  to evolve N steps
@@ -12,7 +12,6 @@ def evolve(world,steps,Born=(3,),Survive=(2,3),Infinite=False):
 	center_i=rows>>1
 	center_j=cols>>1
 	world=np.array(world,dtype=np.int8)
-	
 	def evolveCells(world):
 		"""The method that does the actual evolution.
 		Only the non-zero cells i.e alive or alive neighbours
@@ -22,8 +21,8 @@ def evolve(world,steps,Born=(3,),Survive=(2,3),Infinite=False):
 		#   [i+1,j-1]  [i+1,j]   [i+1,j+1]
 		step=world.copy()
 		for i in xrange(rows):
-			for j in xrange (cols):
-				alive=bool(world[i,j])
+			for j in xrange(cols):
+				alive=int(world[i,j])
 				if i<bottomedge and j<rightedge:
 					neighsum=int(world[i-1,j-1]+\
 							world[i-1,j]+\
@@ -62,9 +61,9 @@ def evolve(world,steps,Born=(3,),Survive=(2,3),Infinite=False):
 							world[i+1,j]+\
 							world[i+1,0])
 
-				if neighsum in Born and alive==False:
+				if neighsum in Born and alive==0:
 					step[i,j]=1
-				elif alive==True and neighsum in Survive :
+				elif alive==1 and neighsum in Survive :
 					step[i,j]=1
 				else:
 					step[i,j]=0
