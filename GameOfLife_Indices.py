@@ -4,6 +4,7 @@ import numpy as np
 # https://www.phatcode.net/res/224/files/html/ch17/17-01.html
 
 #Simple function to encode the rules,this depends on how the evolve expects them
+
 def GameOfLife(world):
 	#Live or dead is the 0th bit
 	 #Since the neighbour info is encoded 
@@ -21,6 +22,7 @@ def HighLife(world):
 	return idx_alive_to_die,idx_dead_to_live
 
 #This is a generator  to evolve N steps
+
 def evolve(world,steps,ruleFun=GameOfLife,Infinite=False):
 	""" Each cell encodes at bit :
 	0 : Live or dead
@@ -36,6 +38,7 @@ def evolve(world,steps,ruleFun=GameOfLife,Infinite=False):
 	mesh=np.meshgrid(np.linspace(-1,1,3),np.linspace(-1,1,3),indexing='ij')
 	mesh_i=np.array(np.delete(mesh[0].flatten(),4),dtype=np.int8)[np.newaxis].T
 	mesh_j=np.array(np.delete(mesh[1].flatten(),4),dtype=np.int8)[np.newaxis].T
+	
 	def neighbours(world,updateIdx,toadd):
 		"""Returns the indices of the 8 Neighbours of cell(i,j)
 		   Wraps around the right/bottom edge of the world.
@@ -54,7 +57,7 @@ def evolve(world,steps,ruleFun=GameOfLife,Infinite=False):
 		np.add.at(world, (update_i,update_j),toadd)
 		return world
 
-
+	
 	def evolveCells(world):
 		"""The method that does the actual evolution.
 		Only the non-zero cells i.e alive or alive neighbours
@@ -135,7 +138,7 @@ if __name__ =='__main__':
 	animation=True
 	if not animation:
 		world = np.loadtxt('GliderGun.txt')
-		for nextWorld in evolve(world,10000):
+		for nextWorld in evolve(world,1000):
 			pass
 	else:
 		#Test the animation 
@@ -165,7 +168,7 @@ if __name__ =='__main__':
 			ani = animation.FuncAnimation(fig, animate, frames=animationFrames,interval=inInterval,blit=True)
 			plt.show()
 
-		world = np.loadtxt('Pulsar.txt')
+		world = np.loadtxt('GliderGun.txt')
 		animateGame(world,1000,50)
 
 

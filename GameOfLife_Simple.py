@@ -12,6 +12,7 @@ def evolve(world,steps,Born=(3,),Survive=(2,3),Infinite=False):
 	center_i=rows>>1
 	center_j=cols>>1
 	world=np.array(world,dtype=np.int8)
+	
 	def evolveCells(world):
 		"""The method that does the actual evolution.
 		Only the non-zero cells i.e alive or alive neighbours
@@ -22,47 +23,48 @@ def evolve(world,steps,Born=(3,),Survive=(2,3),Infinite=False):
 		step=world.copy()
 		for i in xrange(rows):
 			for j in xrange (cols):
-				alive=world[i,j]
-				if i==bottomedge and j==rightedge:
-					neighsum=world[i-1,j-1]+\
-							world[i-1,j]+\
-							world[i-1,0]+\
-							world[i,j-1]+\
-							world[i,0]+\
-							world[0,j-1]+\
-							world[0,j]+\
-							world[0,0]
-				elif i==bottomedge:
-					neighsum=world[i-1,j-1]+\
-							world[i-1,j]+\
-							world[i-1,j+1]+\
-							world[i,j-1]+\
-							world[i,j+1]+\
-							world[0,j-1]+\
-							world[0,j]+\
-							world[0,j+1]
-				elif j==rightedge:
-					neighsum=world[i-1,j-1]+\
-							world[i-1,j]+\
-							world[i-1,0]+\
-							world[i,j-1]+\
-							world[i,0]+\
-							world[i+1,j-1]+\
-							world[i+1,j]+\
-							world[i+1,0]
-				else:
-					neighsum=world[i-1,j-1]+\
+				alive=bool(world[i,j])
+				if i<bottomedge and j<rightedge:
+					neighsum=int(world[i-1,j-1]+\
 							world[i-1,j]+\
 							world[i-1,j+1]+\
 							world[i,j-1]+\
 							world[i,j+1]+\
 							world[i+1,j-1]+\
 							world[i+1,j]+\
-							world[i+1,j+1]
+							world[i+1,j+1])
 
-				if alive==0 and neighsum in Born:
+				elif i==bottomedge and j==rightedge:
+					neighsum=int(world[i-1,j-1]+\
+							world[i-1,j]+\
+							world[i-1,0]+\
+							world[i,j-1]+\
+							world[i,0]+\
+							world[0,j-1]+\
+							world[0,j]+\
+							world[0,0])
+				elif i==bottomedge:
+					neighsum=int(world[i-1,j-1]+\
+							world[i-1,j]+\
+							world[i-1,j+1]+\
+							world[i,j-1]+\
+							world[i,j+1]+\
+							world[0,j-1]+\
+							world[0,j]+\
+							world[0,j+1])
+				elif j==rightedge:
+					neighsum=int(world[i-1,j-1]+\
+							world[i-1,j]+\
+							world[i-1,0]+\
+							world[i,j-1]+\
+							world[i,0]+\
+							world[i+1,j-1]+\
+							world[i+1,j]+\
+							world[i+1,0])
+
+				if neighsum in Born and alive==False:
 					step[i,j]=1
-				elif alive==1 and neighsum in Survive :
+				elif alive==True and neighsum in Survive :
 					step[i,j]=1
 				else:
 					step[i,j]=0
