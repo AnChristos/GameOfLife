@@ -12,7 +12,6 @@ def evolve(world,steps,Born=(3,),Survive=(2,3),Infinite=False):
 	center_i=rows>>1
 	center_j=cols>>1
 	world=np.array(world,dtype=np.int8)
-	@profile
 	def evolveCells(world):
 		#This is an unoptimised basic version
 		#[i-1,j-1], [i-1,j], [i-1,j+1]
@@ -122,7 +121,7 @@ if __name__ =='__main__':
 	animation=False
 	if not animation:
 		world = np.loadtxt('GliderGun.txt')
-		for nextWorld in evolve(world,100):
+		for nextWorld in evolve(world,10000):
 			pass
 	else:
 		#Test the animation 

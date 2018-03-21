@@ -7,7 +7,6 @@ import numpy as np
 
 
 #This is a generator / closure to evolve N steps
-@profile
 def evolve(world,steps):
 
     for _ in xrange(steps):

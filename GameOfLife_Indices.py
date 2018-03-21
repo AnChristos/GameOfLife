@@ -4,21 +4,20 @@ import numpy as np
 # https://www.phatcode.net/res/224/files/html/ch17/17-01.html
 
 #Simple function to encode the rules,this depends on how the evolve expects them
-
 def GameOfLife(world):
 	#Live or dead is the 0th bit
 	 #Since the neighbour info is encoded 
 	#if it is alive and does not have 2 or 3 neighbours it must die
-	idx_alive_to_die= np.logical_and ( (world&0x01) , np.logical_and( (world>>1)!=2 , (world>>1)!=3)).nonzero()
+	idx_alive_to_die= np.logical_and ( (world&0x01) , np.logical_and( (world>>1)!=2,(world>>1)!=3 ) ).nonzero()
 	#if it is dead and has 3 neighbours it becomes alive 
-	idx_dead_to_live= np.logical_and( (world&0x01)==0 , ((world>>1)==3)).nonzero()	
+	idx_dead_to_live= np.logical_and( (world>>1)==3, (world&0x01)==0 ).nonzero()
 	return idx_alive_to_die,idx_dead_to_live
 
 def HighLife(world):
 	#if it is alive and does not have 2 or 3 neighbours it must die
-	idx_alive_to_die=np.nonzero((world!=0) & (world&0x01) &((world>>1)!=2) & ((world>>1)!=3))
+	idx_alive_to_die= np.logical_and ( (world&0x01) , np.logical_and( (world>>1)!=2 , (world>>1)!=3)).nonzero()
 	#if it is dead and has 3 or 6 neighbours it becomes alive 
-	idx_dead_to_live= np.nonzero((world!=0) & ((world&0x01)==0) & ( ((world>>1)==3) | ((world>>1)==6) ) )
+	idx_dead_to_live= np.logical_and(np.logical_or( (world>>1)==3, (world>>1)==6), (world&0x01)==0).nonzero()	
 	return idx_alive_to_die,idx_dead_to_live
 
 #This is a generator  to evolve N steps
@@ -38,7 +37,7 @@ def evolve(world,steps,ruleFun=GameOfLife,Infinite=False):
 	mesh=np.meshgrid(np.linspace(-1,1,3),np.linspace(-1,1,3),indexing='ij')
 	mesh_i=np.array(np.delete(mesh[0].ravel(),4),dtype=np.int8)[np.newaxis].T
 	mesh_j=np.array(np.delete(mesh[1].ravel(),4),dtype=np.int8)[np.newaxis].T
-		
+	
 	def neighbours(world,updateIdx,toadd):
 		"""Returns the indices of the 8 Neighbours of cell(i,j)
 		   Wraps around the right/bottom edge of the world.
@@ -75,7 +74,7 @@ def evolve(world,steps,ruleFun=GameOfLife,Infinite=False):
             		world[idx_alive_to_die] &= (~0x01) 
             		world=neighbours(world,idx_alive_to_die,-2)
 		return world
-
+	
 	def handle_inf():
 		#The simplest is to keep the cells at the middle of the board
 		#At least for shapes than do not grow too fast keeping the "centre
@@ -95,11 +94,11 @@ def evolve(world,steps,ruleFun=GameOfLife,Infinite=False):
 		addrows=0
 		addcols=0
 		if (max_i==bottomedge or  min_i==0):
-			addrows=int(0.1*rows)
+			addrows=int(0.2*rows)
 			newrows=rows+2*addrows
 
 		if(max_j==rightedge or  max_j==0) :
-			addcols=int(0.1*cols)
+			addcols=int(0.2*cols)
 			newcols=cols+2*addcols
 		
 		newshape=(newrows,newcols)
@@ -139,7 +138,7 @@ if __name__ =='__main__':
 	animation=True
 	if not animation:
 		world = np.loadtxt('GliderGun.txt')
-		for nextWorld in evolve(world,10000):
+		for nextWorld in evolve(world,10000,GameOfLife,False):
 			pass
 	else:
 		#Test the animation 
@@ -157,7 +156,7 @@ if __name__ =='__main__':
 			#This will genetate as many frames as requested 	
 			def animationFrames():
 				yield world
-				for i in evolve(world,inFrames,GameOfLife,True):
+				for i in evolve(world,inFrames):
 					yield i
 
 			#Here we set the 'artist', needs one input argument

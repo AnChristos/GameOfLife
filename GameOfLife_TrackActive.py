@@ -15,7 +15,7 @@ def evolve(world,steps,Born=(3,),Survive=(2,3),Infinite=False):
 	mesh=np.meshgrid(np.linspace(-1,1,3),np.linspace(-1,1,3),indexing='ij')
 	mesh_i=np.array(mesh[0].ravel(),dtype=np.int8)[np.newaxis].T
 	mesh_j=np.array(mesh[1].ravel(),dtype=np.int8)[np.newaxis].T
-
+	@profile
 	def evolveCells(world):
 		#[i-1,j-1], [i-1,j], [i-1,j+1]
 		#   [i,j-1 ] ,  ----  , [i,j+1]
@@ -135,10 +135,10 @@ def evolve(world,steps,Born=(3,),Survive=(2,3),Infinite=False):
 		yield world
 
 if __name__ =='__main__':
-	animation=True
+	animation=False
 	if not animation:
 		world = np.loadtxt('GliderGun.txt')
-		for nextWorld in evolve(world,100):
+		for nextWorld in evolve(world,10000):
 			pass
 	else:
 		#Test the animation 
