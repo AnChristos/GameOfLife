@@ -34,8 +34,8 @@ def evolve(world,steps,ruleFun=GameOfLife,doWrap=False):
     sizeR=rows+6
     
     visBeginC=3
-    visEndC=cols+6
-    sizeC=cols+3
+    visEndC=cols+3
+    sizeC=cols+6
     
     if doWrap:
         visBeginR=0
