@@ -34,8 +34,8 @@ def evolve(world,steps,ruleFun=GameOfLife,doWrap=False):
     sizeR=rows+6
     
     visBeginC=3
-    visEndC=cols+3
-    sizeC=cols+6
+    visEndC=cols+6
+    sizeC=cols+3
     
     if doWrap:
         visBeginR=0
@@ -122,7 +122,7 @@ def evolve(world,steps,ruleFun=GameOfLife,doWrap=False):
 
 if __name__ =='__main__':
     animation=True
-    world = np.loadtxt('GliderGun.txt')
+    world = np.loadtxt('R-Pantomino.txt')
     if not animation:
         for nextWorld in evolve(world,10000,GameOfLife,False):
             pass

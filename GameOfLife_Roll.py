@@ -24,9 +24,9 @@ def evolve(world,steps):
 
 if __name__ =='__main__':
 
- 	animation=False
+	world = np.loadtxt('R-Pantomino.txt')
+ 	animation=True
 	if not animation:
-		world = np.loadtxt('GliderGun.txt')
 		for nextWorld in evolve(world,10000):
 			pass
 	else:
@@ -54,8 +54,7 @@ if __name__ =='__main__':
     			ani = animation.FuncAnimation(fig, animate, frames=animationFrames,interval=inInterval,blit=True)
 			plt.show()
 
-		world = np.loadtxt('GliderGun.txt')
-		animateGame(world,200,50)
+		animateGame(world,1200,20)
 	
 
 
