@@ -1,19 +1,20 @@
 #!/usr/bin/env python
 import numpy as np
+#Rule functions
 def GameOfLife(world):
     #if it is alive and does not have 2 or 3 neighbours it must die
-    idx_alive_to_die= np.logical_and ( (world&0x01) , np.logical_and( (world>>1)!=2,(world>>1)!=3 ) ).nonzero()
+    idx_alive_to_die= np.where(np.logical_and((world&0x01), np.logical_or( world-5<0,world-7>0)))
     #if it is dead and has 3 neighbours it becomes alive 
-    idx_dead_to_live= np.logical_and( (world>>1)==3, (world&0x01)==0 ).nonzero()
+    idx_dead_to_live= np.where(world==6)    
     return idx_alive_to_die,idx_dead_to_live
+
 
 def HighLife(world):
     #if it is alive and does not have 2 or 3 neighbours it must die
-    idx_alive_to_die= np.logical_and ( (world&0x01) , np.logical_and( (world>>1)!=2 , (world>>1)!=3)).nonzero()
+    idx_alive_to_die= np.where(np.logical_and((world&0x01), np.logical_or( world-5<0,world-7>0)))
     #if it is dead and has 3 or 6 neighbours it becomes alive 
-    idx_dead_to_live= np.logical_and(np.logical_or( (world>>1)==3, (world>>1)==6), (world&0x01)==0).nonzero()	
+    idx_dead_to_live= np.where(np.logical_or( world==6, world==12))
     return idx_alive_to_die,idx_dead_to_live
-
 
 # Here I tried to replicate this one from the "black book"
 # https://www.phatcode.net/res/224/files/html/ch17/17-06.html#Heading8
@@ -108,10 +109,10 @@ class ConwayGame:
         #we move all things to the next step
         #we need to add or subtract 2 for each of the 8 neighbours
         if idx_dead_to_live[0].size !=0 :
-            self.worldInternal[idx_dead_to_live] |= 0x01
+            self.worldInternal[idx_dead_to_live] +=1
             self.neighbours(idx_dead_to_live,2)
         if idx_alive_to_die[0].size!=0 :
-            self.worldInternal[idx_alive_to_die] &= (~0x01) 
+            self.worldInternal[idx_alive_to_die] -=1 
             self.neighbours(idx_alive_to_die,-2)
 
         if not self.doWrap:
@@ -131,9 +132,12 @@ def animateGame(world,inFrames,inInterval,ruleFun=GameOfLife,doWrap=False):
     im=plt.imshow(world,cmap=plt.cm.binary,interpolation='nearest',animated=True)
     ax.set_yticklabels([])
     ax.set_xticklabels([])
-    game=ConwayGame(world,GameOfLife,doWrap)
+    game=ConwayGame(world,ruleFun,doWrap)
+    class nonlocal:
+        counter=1
     #animate function
     def animate(frame):
+        
         game.evolveCells()
         newWorld=game.getCurrent()
         im.set_data(newWorld)
@@ -144,14 +148,14 @@ def animateGame(world,inFrames,inInterval,ruleFun=GameOfLife,doWrap=False):
 
 
 if __name__ =='__main__':
-    world=np.loadtxt('GliderGun.txt',dtype=np.int8)
+    world=np.loadtxt('R-Pantomino.txt',dtype=np.int8)
     #Test the animation 
     import matplotlib
     matplotlib.use('TKAgg')
     import matplotlib.pyplot as plt
     import matplotlib.animation as animation
 
-    animateGame(world,inFrames=2000,inInterval=30,doWrap=False)
+    animateGame(world,inFrames=2000,inInterval=30,ruleFun=GameOfLife,doWrap=False)
 
 
 
