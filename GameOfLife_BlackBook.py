@@ -34,7 +34,7 @@ import numpy as np
 
 # Rule functions
 def GameOfLife(world):
-    ''' Game of Life rules.Inputs : world. 
+    ''' Game of Life rules.Inputs : world.
         Returns a tuple with the indices of the cells that change status,
         in the form (idx_alive_to_die,idx_dead_to_live)'''
     # if it is alive and does not have 2 or 3 neighbours it must die.
@@ -45,7 +45,7 @@ def GameOfLife(world):
 
 
 def HighLife(world):
-    ''' HighLife rules: Input world. 
+    ''' HighLife rules: Input world.
         Returns a tuple with the indices of the cells that change status,
         in the form (idx_alive_to_die,idx_dead_to_live)'''
     # if it is alive and does not have 2 or 3 neighbours it must die
@@ -56,18 +56,18 @@ def HighLife(world):
 
 
 class ConwayGame:
-    '''Class representing a world evolving with certain rules. 
+    '''Class representing a world evolving with certain rules.
        With wrapping or not wrapping of the edges'''
 
     def __init__(self, world, ruleFun=GameOfLife, doWrap=False):
-        ''' Create instance, with 
-            an input world, 
-            a function for the rules ,
+        ''' Create instance, with
+            an input world,
+            a function for the rules,
             and option to wrap or not wrap around the edges of the world'''
 
-        #[i-1,j-1], [i-1,j], [i-1,j+1]
+        # [i-1,j-1], [i-1,j], [i-1,j+1]
         # [i,j-1 ] ,  ----  , [i,j+1]
-        #[i+1,j-1]  [i+1,j]   [i+1,j+1]
+        # [i+1,j-1]  [i+1,j]   [i+1,j+1]
         # As two 8x1 row vectors. One for the i axis and one for the j axis
         self.relative_i = np.array(
             [-1, -1, -1, 0, 0, 1, 1, 1], dtype=np.int8).reshape(8, 1)
@@ -107,9 +107,9 @@ class ConwayGame:
         self.neighbours(self.worldInternal.nonzero(), 2)
 
     def neighbours(self, updateIdx, toadd):
-        """Update the neighbours. 
-            updateIdx[0],updateIdx[1] are the i,j indices 
-            of the cells to update the neighbours of. 
+        """Update the neighbours.
+            updateIdx[0],updateIdx[1] are the i,j indices
+            of the cells to update the neighbours of.
             We find them and add "toadd" to them"""
 
         # update_i/update_j are 8x1 column vectors
@@ -158,8 +158,9 @@ class ConwayGame:
 
 
 def animateGame(inFrames, inInterval, ConwayGame):
-    '''Produce an animation of size inFrames, 
-    with interval between frames inInterval given a ConwayGame class instance'''
+    '''Produce an animation of size inFrames,
+    with interval between frames inInterval
+    given a ConwayGame class instance'''
     fig, ax = plt.subplots()
     im = plt.imshow(ConwayGame.getCurrent(), cmap=plt.cm.binary,
                     interpolation='nearest', animated=True)
@@ -173,8 +174,8 @@ def animateGame(inFrames, inInterval, ConwayGame):
         im.set_data(newWorld)
         return (im,)
 
-    anim = animation.FuncAnimation(fig, animate, frames=inFrames,
-                                   interval=inInterval, blit=True)
+    animation.FuncAnimation(fig, animate, frames=inFrames,
+                            interval=inInterval, blit=True)
     plt.show()
 
 
