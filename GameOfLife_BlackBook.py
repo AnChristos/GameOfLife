@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import numpy as np
 # There are more Pythonic solutions
 
@@ -56,24 +55,19 @@ def HighLife(world):
 
 
 class ConwayGame:
-    '''Class representing a world evolving with certain rules.
-       With wrapping or not wrapping of the edges'''
+    '''Class representing a world evolving with certain
+    rules using a specific geometry'''
 
     def __init__(self, world, ruleFun=GameOfLife, doWrap=False):
-        ''' Create instance, with
-            an input world,
-            a function for the rules,
-            and option to wrap or not wrap around the edges of the world'''
-
+        ''' Constructor, input world, function for the rules ,
+        wrap or not wrap the world'''
         # [i-1,j-1], [i-1,j], [i-1,j+1]
         # [i,j-1 ] ,  ----  , [i,j+1]
         # [i+1,j-1]  [i+1,j]   [i+1,j+1]
-        # As two 8x1 row vectors. One for the i axis and one for the j axis
         self.relative_i = np.array(
-            [-1, -1, -1, 0, 0, 1, 1, 1], dtype=np.int8).reshape(8, 1)
+            [-1, -1, -1, 0, 0, 1, 1, 1], dtype=np.int8)[np.newaxis].T
         self.relative_j = np.array(
-            [-1, 0, 1, -1, 1, -1, 0, 1], dtype=np.int8).reshape(8, 1)
-
+            [-1, 0, 1, -1, 1, -1, 0, 1], dtype=np.int8)[np.newaxis].T
         # The rules
         self.ruleFun = ruleFun
         self.doWrap = doWrap
@@ -97,31 +91,29 @@ class ConwayGame:
         self.bottomedge = self.sizeR-1
         self.rightedge = self.sizeC-1
 
-        # internal world representation
+        # internal world
+        # we can can use the internal convention
+        # and also avoid the wrapping
         self.worldInternal = np.zeros((self.sizeR, self.sizeC))
         self.worldInternal[self.visBeginR:self.visEndR,
                            self.visBeginC:self.visEndC] = world
         self.worldInternal = np.array(self.worldInternal, dtype=np.int8)
 
-        # Initialise the info for the neighbours of the live cells
         self.neighbours(self.worldInternal.nonzero(), 2)
 
     def neighbours(self, updateIdx, toadd):
-        """Update the neighbours.
-            updateIdx[0],updateIdx[1] are the i,j indices
-            of the cells to update the neighbours of.
-            We find them and add "toadd" to them"""
-
-        # update_i/update_j are 8x1 column vectors
-        # updateIdx[0],updateIdx[0] are 1xN row vectors
-        # Adding produces two "aligned" 8xN matrices which
-        # we ravel so we have N*8 indices.
-        # of the neighbours to change
-        update_i = (self.relative_i+updateIdx[0]).ravel()
-        update_j = (self.relative_j+updateIdx[1]).ravel()
-
-        # Here numpy array does the underflow wrapping
-        # We need to just add  the overlow one.
+        """Returns the indices of the 8 Neighbours of cell(i,j)
+        Wraps around the right/bottom edge of the world.
+        The left/up is covered by the numpy conventions"""
+        # update_i/j are (8 rows, 1 column)
+        # updateIdx[0/1] are (1 row, N columns
+        # where N depends on the indices to update)
+        # At the end we have 2 matrices with the indexes
+        # of the neighbours to update
+        update_i = self.relative_i+updateIdx[0]
+        update_j = self.relative_j+updateIdx[1]
+        # Here numpy array does the negative wrapping
+        # We need to add the positive.
         update_i[update_i > self.bottomedge] = 0
         update_j[update_j > self.rightedge] = 0
 
@@ -130,12 +122,16 @@ class ConwayGame:
         pass
 
     def evolveCells(self):
-        """The method that does the actual evolution."""
-
-        # Call the rule function
+        '''The method that does the actual evolution.
+        Only the non-zero cells i.e alive or alive neighbours
+        Need to be checked. Update the cell plus its neighbours'''
+        # Live or dead is the 0th bit
+        # Since the neighbour info is encoded
         idx_alive_to_die, idx_dead_to_live = self.ruleFun(self.worldInternal)
-
-        # Update the cells needing update and their 8 neighbours
+        # Now in the world update the cells to change and the 8 neighbour words
+        # All the operations are fixed/encoded at this stage i.e
+        # we move all things to the next step
+        # we need to add or subtract 2 to each of the 8 neighbours
         if idx_dead_to_live[0].size != 0:
             self.worldInternal[idx_dead_to_live] += 1
             self.neighbours(idx_dead_to_live, 2)
@@ -143,7 +139,6 @@ class ConwayGame:
             self.worldInternal[idx_alive_to_die] -= 1
             self.neighbours(idx_alive_to_die, -2)
 
-        # If needed 0 the edges
         if not self.doWrap:
             self.worldInternal[0, 0:] = 0
             self.worldInternal[0:, 0] = 0
@@ -152,7 +147,7 @@ class ConwayGame:
         pass
 
     def getCurrent(self):
-        '''current state of the evolving world'''
+        """Returns the current world"""
         return self.worldInternal[self.visBeginR:self.visEndR,
                                   self.visBeginC:self.visEndC] & 0x01
 
@@ -184,7 +179,7 @@ if __name__ == '__main__':
     game = ConwayGame(world, GameOfLife, False)
     # Test the animation
     import matplotlib
-    matplotlib.use('TKAgg')
+    matplotlib.use('MacOSX')
     import matplotlib.pyplot as plt
     import matplotlib.animation as animation
 
