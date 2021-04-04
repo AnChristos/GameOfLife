@@ -179,7 +179,7 @@ if __name__ == '__main__':
     game = ConwayGame(world, GameOfLife, False)
     # Test the animation
     import matplotlib
-    matplotlib.use('MacOSX')
+    matplotlib.use('TKAgg')
     import matplotlib.pyplot as plt
     import matplotlib.animation as animation
 
