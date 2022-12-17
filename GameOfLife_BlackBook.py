@@ -7,7 +7,7 @@ from matplotlib.animation import FuncAnimation
 # https://www.phatcode.net/res/224/files/html/ch17/17-06.html#Heading8
 # Quite  a bit is still lost to the numpy translation.
 
-# Each cell keeps track of its status and of the status of his 8 neighbours.
+# Each cell keeps track of its status and of the status of its 8 neighbours.
 # It encodes the following :
 # Bit(s)
 # 0  : Live or dead . So 0 or 1
