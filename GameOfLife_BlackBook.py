@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 # There are more Pythonic solutions
 
 # Here I tried to replicate the logic from
@@ -152,35 +154,29 @@ class ConwayGame:
                                   self.visBeginC:self.visEndC] & 0x01
 
 
-def animateGame(inFrames, inInterval, ConwayGame):
+def animateGame(inFrames, inInterval, world):
     '''Produce an animation of size inFrames,
     with interval between frames inInterval
     given a ConwayGame class instance'''
+    game = ConwayGame(world, GameOfLife, False)
     fig, ax = plt.subplots()
-    im = plt.imshow(ConwayGame.getCurrent(), cmap=plt.cm.binary,
+    im = plt.imshow(game.getCurrent(), cmap=plt.cm.binary,
                     interpolation='nearest', animated=True)
     ax.set_yticklabels([])
     ax.set_xticklabels([])
     # animate function
 
     def animate(frame):
-        ConwayGame.evolveCells()
-        newWorld = ConwayGame.getCurrent()
+        game.evolveCells()
+        newWorld = game.getCurrent()
         im.set_data(newWorld)
         return (im,)
 
-    animation.FuncAnimation(fig, animate, frames=inFrames,
-                            interval=inInterval, blit=True)
+    animation = FuncAnimation(fig, animate, frames=inFrames,
+                              interval=inInterval, blit=True)
     plt.show()
 
 
 if __name__ == '__main__':
     world = np.loadtxt('R-Pantomino.txt', dtype=np.int8)
-    game = ConwayGame(world, GameOfLife, False)
-    # Test the animation
-    import matplotlib
-    matplotlib.use('TKAgg')
-    import matplotlib.pyplot as plt
-    import matplotlib.animation as animation
-
-    animateGame(2000, 30, game)
+    anim = animateGame(2000, 30, world)
